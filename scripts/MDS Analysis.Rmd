@@ -1,0 +1,28 @@
+---
+title: "MDS analysis"
+output: html_notebook
+---
+
+Goal: Do an MDS plot using Irene's SNPs to look for relatedness among plants
+
+First, need to call SNPs using all BAM files at once:
+
+working in directory `2019/IreneSnps` on whitney
+
+first, sort bams
+
+```{r, engine='bash', eval=FALSE}
+for f in SNPanalysis/*LT*rmdup.bam
+    do 
+       newname=`basename $f .bam`_sort.bam
+       samtools sort -o $newname --reference SNPanalysis/Pinsaporeference1 $f 
+    done
+
+
+```
+
+
+```{r, engine='bash', eval=FALSE}
+freebayes -f SNPanalysis/Pinsaporeference1 --no-indels --no-mnps --no-complex SNPanalysis/*LT*rmdup_sort.bam > LT.vcf &
+```
+
