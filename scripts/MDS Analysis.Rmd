@@ -23,6 +23,6 @@ for f in SNPanalysis/*LT*rmdup.bam
 
 
 ```{r, engine='bash', eval=FALSE}
-freebayes -f SNPanalysis/Pinsaporeference1 --no-indels --no-mnps --no-complex SNPanalysis/*LT*rmdup_sort.bam > LT.vcf &
+freebayes -f SNPanalysis/Pinsaporeference1 --no-indels --no-mnps --no-complex *LT*rmdup_sort.bam > LT.vcf &
 ```
 
