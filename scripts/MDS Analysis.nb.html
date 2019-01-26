@@ -1700,6 +1700,8 @@ $(document).ready(function () {
 
 <!-- rnb-text-begin -->
 <p>Goal: Do an MDS plot using Irene’s SNPs to look for relatedness among plants</p>
+<div id="snp-calling-with-freebayes" class="section level2">
+<h2>Snp calling with freebayes</h2>
 <p>First, need to call SNPs using all BAM files at once:</p>
 <p>working in directory <code>2019/IreneSnps</code> on whitney</p>
 <p>first, sort bams</p>
@@ -1714,6 +1716,17 @@ $(document).ready(function () {
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p>next, assign read groups to bams</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgYmFzaFxuYmFtYWRkcmcgYHByaW50ZiBcIiAtYiAlcyBcIiAqc29ydC5iYW1gID4gTFRfcm1kdXBfc29ydF9jb21iaW5lZC5iYW1cbmBgYCJ9 -->
+<pre class="bash"><code>bamaddrg `printf &quot; -b %s &quot; *sort.bam` &gt; LT_rmdup_sort_combined.bam</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiY291bGQgbm90IG9wZW4gaW5wdXQgQkFNIGZpbGVzXG4ifQ== -->
+<pre><code>could not open input BAM files</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
 <!-- rnb-source-begin eyJkYXRhIjoiZnJlZWJheWVzIC1mIFNOUGFuYWx5c2lzL1BpbnNhcG9yZWZlcmVuY2UxIC0tbm8taW5kZWxzIC0tbm8tbW5wcyAtLW5vLWNvbXBsZXggKkxUKnJtZHVwX3NvcnQuYmFtID4gTFQudmNmICYifQ== -->
@@ -1722,8 +1735,98 @@ $(document).ready(function () {
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoic2NwIHdoaXRuZXkucGxiLnVjZGF2aXMuZWR1OjIwMTkvSXJlbmVTbnBzL0xULnZjZi5neiAuLyJ9 -->
+<pre class="r"><code>scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ./</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="now-analyze-vcf-in-r" class="section level2">
+<h2>now analyze vcf in R</h2>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5cbmBgYCJ9 -->
+<pre class="r"><code>library(tidyverse)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiV2FybmluZyBtZXNzYWdlOlxuSW4gcmVzW2ldIDwtIHdpdGhDYWxsaW5nSGFuZGxlcnMoaWYgKHRhbmdsZSkgcHJvY2Vzc190YW5nbGUoZ3JvdXApIGVsc2UgcHJvY2Vzc19ncm91cChncm91cCksICA6XG4gIG51bWJlciBvZiBpdGVtcyB0byByZXBsYWNlIGlzIG5vdCBhIG11bHRpcGxlIG9mIHJlcGxhY2VtZW50IGxlbmd0aFxuIn0= -->
+<pre><code>Warning message:
+In res[i] &lt;- withCallingHandlers(if (tangle) process_tangle(group) else process_group(group),  :
+  number of items to replace is not a multiple of replacement length</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgYmFzaFxuZ3VuemlwIC1jIC4uL2lucHV0L0xULnZjZi5neiB8IGhlYWQgLW4gMzBcbmBgYCJ9 -->
+<pre class="bash"><code>gunzip -c ../input/LT.vcf.gz | head -n 30</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiIyNmaWxlZm9ybWF0PVZDRnY0LjJcbiMjZmlsZURhdGU9MjAxOTAxMjRcbiMjc291cmNlPWZyZWVCYXllcyB2MS4xLjAtNDYtZzhkMmIzYTBcbiMjcmVmZXJlbmNlPVNOUGFuYWx5c2lzL1BpbnNhcG9yZWZlcmVuY2UxXG4jI2NvbnRpZz08SUQ9R0NaTjAxMDAwMDAxLjEsbGVuZ3RoPTgxOD5cbiMjY29udGlnPTxJRD1HQ1pOMDEwMDAwMDIuMSxsZW5ndGg9NzgyPlxuIyNjb250aWc9PElEPUdDWk4wMTAwMDAwMy4xLGxlbmd0aD03NDY+XG4jI2NvbnRpZz08SUQ9R0NaTjAxMDAwMDA0LjEsbGVuZ3RoPTg1ND5cbiMjY29udGlnPTxJRD1HQ1pOMDEwMDAwMDUuMSxsZW5ndGg9MzU1PlxuIyNjb250aWc9PElEPUdDWk4wMTAwMDAwNi4xLGxlbmd0aD00MzI+XG4jI2NvbnRpZz08SUQ9R0NaTjAxMDAwMDA3LjEsbGVuZ3RoPTM2MzI+XG4jI2NvbnRpZz08SUQ9R0NaTjAxMDAwMDA4LjEsbGVuZ3RoPTMyNzg+XG4jI2NvbnRpZz08SUQ9R0NaTjAxMDAwMDA5LjEsbGVuZ3RoPTMxOTI+XG4jI2NvbnRpZz08SUQ9R0NaTjAxMDAwMDEwLjEsbGVuZ3RoPTMzMzg+XG4jI2NvbnRpZz08SUQ9R0NaTjAxMDAwMDExLjEsbGVuZ3RoPTMyMjM+XG4jI2NvbnRpZz08SUQ9R0NaTjAxMDAwMDEyLjEsbGVuZ3RoPTQ4Mj5cbiMjY29udGlnPTxJRD1HQ1pOMDEwMDAwMTMuMSxsZW5ndGg9NDAxMT5cbiMjY29udGlnPTxJRD1HQ1pOMDEwMDAwMTQuMSxsZW5ndGg9Mjk5Mz5cbiMjY29udGlnPTxJRD1HQ1pOMDEwMDAwMTUuMSxsZW5ndGg9NjA1OT5cbiMjY29udGlnPTxJRD1HQ1pOMDEwMDAwMTYuMSxsZW5ndGg9MjAyMT5cbiMjY29udGlnPTxJRD1HQ1pOMDEwMDAwMTcuMSxsZW5ndGg9MTQwMT5cbiMjY29udGlnPTxJRD1HQ1pOMDEwMDAwMTguMSxsZW5ndGg9NTg1PlxuIyNjb250aWc9PElEPUdDWk4wMTAwMDAxOS4xLGxlbmd0aD0xOTgwPlxuIyNjb250aWc9PElEPUdDWk4wMTAwMDAyMC4xLGxlbmd0aD01NTI+XG4jI2NvbnRpZz08SUQ9R0NaTjAxMDAwMDIxLjEsbGVuZ3RoPTYzND5cbiMjY29udGlnPTxJRD1HQ1pOMDEwMDAwMjIuMSxsZW5ndGg9MjQ3PlxuIyNjb250aWc9PElEPUdDWk4wMTAwMDAyMy4xLGxlbmd0aD0xMjQxPlxuIyNjb250aWc9PElEPUdDWk4wMTAwMDAyNC4xLGxlbmd0aD01NDc+XG4jI2NvbnRpZz08SUQ9R0NaTjAxMDAwMDI1LjEsbGVuZ3RoPTIyMTQ+XG4jI2NvbnRpZz08SUQ9R0NaTjAxMDAwMDI2LjEsbGVuZ3RoPTQ2NT5cbiJ9 -->
+<pre><code>##fileformat=VCFv4.2
+##fileDate=20190124
+##source=freeBayes v1.1.0-46-g8d2b3a0
+##reference=SNPanalysis/Pinsaporeference1
+##contig=&lt;ID=GCZN01000001.1,length=818&gt;
+##contig=&lt;ID=GCZN01000002.1,length=782&gt;
+##contig=&lt;ID=GCZN01000003.1,length=746&gt;
+##contig=&lt;ID=GCZN01000004.1,length=854&gt;
+##contig=&lt;ID=GCZN01000005.1,length=355&gt;
+##contig=&lt;ID=GCZN01000006.1,length=432&gt;
+##contig=&lt;ID=GCZN01000007.1,length=3632&gt;
+##contig=&lt;ID=GCZN01000008.1,length=3278&gt;
+##contig=&lt;ID=GCZN01000009.1,length=3192&gt;
+##contig=&lt;ID=GCZN01000010.1,length=3338&gt;
+##contig=&lt;ID=GCZN01000011.1,length=3223&gt;
+##contig=&lt;ID=GCZN01000012.1,length=482&gt;
+##contig=&lt;ID=GCZN01000013.1,length=4011&gt;
+##contig=&lt;ID=GCZN01000014.1,length=2993&gt;
+##contig=&lt;ID=GCZN01000015.1,length=6059&gt;
+##contig=&lt;ID=GCZN01000016.1,length=2021&gt;
+##contig=&lt;ID=GCZN01000017.1,length=1401&gt;
+##contig=&lt;ID=GCZN01000018.1,length=585&gt;
+##contig=&lt;ID=GCZN01000019.1,length=1980&gt;
+##contig=&lt;ID=GCZN01000020.1,length=552&gt;
+##contig=&lt;ID=GCZN01000021.1,length=634&gt;
+##contig=&lt;ID=GCZN01000022.1,length=247&gt;
+##contig=&lt;ID=GCZN01000023.1,length=1241&gt;
+##contig=&lt;ID=GCZN01000024.1,length=547&gt;
+##contig=&lt;ID=GCZN01000025.1,length=2214&gt;
+##contig=&lt;ID=GCZN01000026.1,length=465&gt;</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiZ3VuemlwOiBlcnJvciB3cml0aW5nIHRvIG91dHB1dDogQnJva2VuIHBpcGVcbmd1bnppcDogLi4vaW5wdXQvTFQudmNmLmd6OiB1bmNvbXByZXNzIGZhaWxlZFxuIn0= -->
+<pre><code>gunzip: error writing to output: Broken pipe
+gunzip: ../input/LT.vcf.gz: uncompress failed</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc25wIDwtIHJlYWRfdHN2KFwiLi4vaW5wdXQvTFQudmNmLmd6XCIsIGNvbW1lbnQgPSBcIiNcIilcblxuYGBgIn0= -->
+<pre class="r"><code>snp &lt;- read_tsv(&quot;../input/LT.vcf.gz&quot;, comment = &quot;#&quot;)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiRHVwbGljYXRlZCBjb2x1bW4gbmFtZXMgZGVkdXBsaWNhdGVkOiAnLicgPT4gJy5fMScgWzddUGFyc2VkIHdpdGggY29sdW1uIHNwZWNpZmljYXRpb246XG5jb2xzKFxuICBHQ1pOMDEwMDAwMDYuMSA9IGNvbF9jaGFyYWN0ZXIoKSxcbiAgYDQ3YCA9IGNvbF9pbnRlZ2VyKCksXG4gIC4gPSBjb2xfY2hhcmFjdGVyKCksXG4gIEMgPSBjb2xfY2hhcmFjdGVyKCksXG4gIFQgPSBjb2xfY2hhcmFjdGVyKCksXG4gIGAyLjU1MjFgID0gY29sX2RvdWJsZSgpLFxuICAuXzEgPSBjb2xfY2hhcmFjdGVyKCksXG4gIGBBQj0wO0FCUD0wO0FDPTI7QUY9MTtBTj0yO0FPPTI7Q0lHQVI9MVg7RFA9MjtEUEI9MjtEUFJBPTA7RVBQPTcuMzUzMjQ7RVBQUj0wO0dUST0wO0xFTj0xO01FQU5BTFQ9MTtNUU09OTtNUU1SPTA7TlM9MTtOVU1BTFQ9MTtPRERTPTAuMjI0MDkzO1BBSVJFRD0xO1BBSVJFRFI9MDtQQU89MDtQUUE9MDtQUVI9MDtQUk89MDtRQT03NDtRUj0wO1JPPTA7UlBMPTA7UlBQPTcuMzUzMjQ7UlBQUj0wO1JQUj0yO1JVTj0xO1NBRj0yO1NBUD03LjM1MzI0O1NBUj0wO1NSRj0wO1NSUD0wO1NSUj0wO1RZUEU9c25wYCA9IGNvbF9jaGFyYWN0ZXIoKSxcbiAgYEdUOkRQOkFEOlJPOlFSOkFPOlFBOkdMYCA9IGNvbF9jaGFyYWN0ZXIoKSxcbiAgYDEvMToyOjAsMjowOjA6Mjo3NDotMS43MDg4NiwtMC42MDIwNiwwYCA9IGNvbF9jaGFyYWN0ZXIoKVxuKVxuIn0= -->
+<pre><code>Duplicated column names deduplicated: &#39;.&#39; =&gt; &#39;._1&#39; [7]Parsed with column specification:
+cols(
+  GCZN01000006.1 = col_character(),
+  `47` = col_integer(),
+  . = col_character(),
+  C = col_character(),
+  T = col_character(),
+  `2.5521` = col_double(),
+  ._1 = col_character(),
+  `AB=0;ABP=0;AC=2;AF=1;AN=2;AO=2;CIGAR=1X;DP=2;DPB=2;DPRA=0;EPP=7.35324;EPPR=0;GTI=0;LEN=1;MEANALT=1;MQM=9;MQMR=0;NS=1;NUMALT=1;ODDS=0.224093;PAIRED=1;PAIREDR=0;PAO=0;PQA=0;PQR=0;PRO=0;QA=74;QR=0;RO=0;RPL=0;RPP=7.35324;RPPR=0;RPR=2;RUN=1;SAF=2;SAP=7.35324;SAR=0;SRF=0;SRP=0;SRR=0;TYPE=snp` = col_character(),
+  `GT:DP:AD:RO:QR:AO:QA:GL` = col_character(),
+  `1/1:2:0,2:0:0:2:74:-1.70886,-0.60206,0` = col_character()
+)</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+</div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiTURTIGFuYWx5c2lzIgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgpHb2FsOiBEbyBhbiBNRFMgcGxvdCB1c2luZyBJcmVuZSdzIFNOUHMgdG8gbG9vayBmb3IgcmVsYXRlZG5lc3MgYW1vbmcgcGxhbnRzCgpGaXJzdCwgbmVlZCB0byBjYWxsIFNOUHMgdXNpbmcgYWxsIEJBTSBmaWxlcyBhdCBvbmNlOgoKd29ya2luZyBpbiBkaXJlY3RvcnkgYDIwMTkvSXJlbmVTbnBzYCBvbiB3aGl0bmV5CgpmaXJzdCwgc29ydCBiYW1zCgpgYGB7ciwgZW5naW5lPSdiYXNoJywgZXZhbD1GQUxTRX0KZm9yIGYgaW4gU05QYW5hbHlzaXMvKkxUKnJtZHVwLmJhbQogICAgZG8gCiAgICAgICBuZXduYW1lPWBiYXNlbmFtZSAkZiAuYmFtYF9zb3J0LmJhbQogICAgICAgc2FtdG9vbHMgc29ydCAtbyAkbmV3bmFtZSAtLXJlZmVyZW5jZSBTTlBhbmFseXNpcy9QaW5zYXBvcmVmZXJlbmNlMSAkZiAKICAgIGRvbmUKCgpgYGAKCgpgYGB7ciwgZW5naW5lPSdiYXNoJywgZXZhbD1GQUxTRX0KZnJlZWJheWVzIC1mIFNOUGFuYWx5c2lzL1BpbnNhcG9yZWZlcmVuY2UxIC0tbm8taW5kZWxzIC0tbm8tbW5wcyAtLW5vLWNvbXBsZXggKkxUKnJtZHVwX3NvcnQuYmFtID4gTFQudmNmICYKYGBgCgo=</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiTURTIGFuYWx5c2lzIgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgpHb2FsOiBEbyBhbiBNRFMgcGxvdCB1c2luZyBJcmVuZSdzIFNOUHMgdG8gbG9vayBmb3IgcmVsYXRlZG5lc3MgYW1vbmcgcGxhbnRzCgoKIyMgU25wIGNhbGxpbmcgd2l0aCBmcmVlYmF5ZXMKCgpGaXJzdCwgbmVlZCB0byBjYWxsIFNOUHMgdXNpbmcgYWxsIEJBTSBmaWxlcyBhdCBvbmNlOgoKd29ya2luZyBpbiBkaXJlY3RvcnkgYDIwMTkvSXJlbmVTbnBzYCBvbiB3aGl0bmV5CgpmaXJzdCwgc29ydCBiYW1zCgpgYGB7ciwgZW5naW5lPSdiYXNoJywgZXZhbD1GQUxTRX0KZm9yIGYgaW4gU05QYW5hbHlzaXMvKkxUKnJtZHVwLmJhbQogICAgZG8gCiAgICAgICBuZXduYW1lPWBiYXNlbmFtZSAkZiAuYmFtYF9zb3J0LmJhbQogICAgICAgc2FtdG9vbHMgc29ydCAtbyAkbmV3bmFtZSAtLXJlZmVyZW5jZSBTTlBhbmFseXNpcy9QaW5zYXBvcmVmZXJlbmNlMSAkZiAKICAgIGRvbmUKYGBgCgoKbmV4dCwgYXNzaWduIHJlYWQgZ3JvdXBzIHRvIGJhbXMKCmBgYHtyLCBlbmdpbmU9J2Jhc2gnfQppbnB1dD0iIgoKZm9yIGYgaW4gYGxzICpzb3J0LmJhbWAKICAgZG8KICAgICAgcmc9YGJhc2VuYW1lICRmIF9ybWR1cF9zb3J0LmJhbWAKICAgICAgaW5wdXQ9IiRpbnB1dCAtYiAkZiAtciAkcmcgLXMgJHJnIgogIGRvbmUKCmVjaG8gJGlucHV0CgpiYW1hZGRyZyAkaW5wdXQgPiBMVF9ybWR1cF9zb3J0X2NvbWJpbmVkLmJhbQpgYGAKCgoKYGBge3IsIGVuZ2luZT0nYmFzaCcsIGV2YWw9RkFMU0V9CmZyZWViYXllcyAtZiBTTlBhbmFseXNpcy9QaW5zYXBvcmVmZXJlbmNlMSAtLW5vLWluZGVscyAtLW5vLW1ucHMgLS1uby1jb21wbGV4ICpMVCpybWR1cF9zb3J0LmJhbSA+IExULnZjZiAmCmBgYAoKYGBge3IsIGVuZ2luZT0nYmFzaCcsIGV2YWw9RkFMU0V9CnNjcCB3aGl0bmV5LnBsYi51Y2RhdmlzLmVkdToyMDE5L0lyZW5lU25wcy9MVC52Y2YuZ3ogLi8KYGBgCgojIyBub3cgYW5hbHl6ZSB2Y2YgaW4gUgoKYGBge3J9CmxpYnJhcnkodGlkeXZlcnNlKQpgYGAKCmBgYHtyLCBlbmdpbmU9J2Jhc2gnfQpndW56aXAgLWMgLi4vaW5wdXQvTFQudmNmLmd6IHwgaGVhZCAtbiAzMApgYGAKCgpgYGB7cn0Kc25wIDwtIHJlYWRfdHN2KCIuLi9pbnB1dC9MVC52Y2YuZ3oiLCBjb21tZW50ID0gIiMiLCBjb2xfbmFtZXMgPSApCmhlYWQoc25wKQpgYGAKCg==</div>
 
 
 

@@ -5,6 +5,10 @@ output: html_notebook
 
 Goal: Do an MDS plot using Irene's SNPs to look for relatedness among plants
 
+
+## Snp calling with freebayes
+
+
 First, need to call SNPs using all BAM files at once:
 
 working in directory `2019/IreneSnps` on whitney
@@ -17,12 +21,48 @@ for f in SNPanalysis/*LT*rmdup.bam
        newname=`basename $f .bam`_sort.bam
        samtools sort -o $newname --reference SNPanalysis/Pinsaporeference1 $f 
     done
-
-
 ```
+
+
+next, assign read groups to bams
+
+```{r, engine='bash'}
+input=""
+
+for f in `ls *sort.bam`
+   do
+      rg=`basename $f _rmdup_sort.bam`
+      input="$input -b $f -r $rg -s $rg"
+  done
+
+echo $input
+
+bamaddrg $input > LT_rmdup_sort_combined.bam
+```
+
 
 
 ```{r, engine='bash', eval=FALSE}
 freebayes -f SNPanalysis/Pinsaporeference1 --no-indels --no-mnps --no-complex *LT*rmdup_sort.bam > LT.vcf &
+```
+
+```{r, engine='bash', eval=FALSE}
+scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ./
+```
+
+## now analyze vcf in R
+
+```{r}
+library(tidyverse)
+```
+
+```{r, engine='bash'}
+gunzip -c ../input/LT.vcf.gz | head -n 30
+```
+
+
+```{r}
+snp <- read_tsv("../input/LT.vcf.gz", comment = "#", col_names = )
+head(snp)
 ```
 
