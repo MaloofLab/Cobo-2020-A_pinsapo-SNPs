@@ -47,7 +47,7 @@ freebayes -f SNPanalysis/Pinsaporeference1 --no-indels --no-mnps --no-complex *L
 ```
 
 ```{r, engine='bash', eval=FALSE}
-scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ./
+scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ../input/
 ```
 
 ## now analyze vcf in R
