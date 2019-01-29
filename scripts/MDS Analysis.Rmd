@@ -26,7 +26,7 @@ for f in SNPanalysis/*LT*rmdup.bam
 
 next, assign read groups to bams
 
-```{r, engine='bash'}
+```{r, engine='bash', eval=FALSE}
 input=""
 
 for f in `ls *sort.bam`
@@ -38,13 +38,25 @@ for f in `ls *sort.bam`
 echo $input
 
 bamaddrg $input > LT_rmdup_sort_combined.bam
-```
 
+samtools index LT_rmdup_sort_combined.bam
+```
 
 
 ```{r, engine='bash', eval=FALSE}
-freebayes -f SNPanalysis/Pinsaporeference1 --no-indels --no-mnps --no-complex *LT*rmdup_sort.bam > LT.vcf &
+freebayes -f SNPanalysis/Pinsaporeference1 --no-indels --no-mnps --no-complex LT_rmdup_sort_combined.bam > LT.vcf &
 ```
+
+try parallel
+```{r, engine='bash', eval=FALSE}
+ln -s /usr/local/stow/freebayes/vcflib ../
+
+/usr/local/stow/freebayes/scripts/fasta_generate_regions.py Pinsaporeference1.fai 100000 > regions
+./freebayes-parallel regions 8 -f Pinsaporeference1 --no-indels --no-mnps --no-complex LT_rmdup_sort_combined.bam > LT.vcf 
+
+```
+
+(note: I edited the freebayes-parallel script so that it would work...)
 
 ```{r, engine='bash', eval=FALSE}
 scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ../input/
@@ -56,13 +68,27 @@ scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ../input/
 library(tidyverse)
 ```
 
-```{r, engine='bash'}
-gunzip -c ../input/LT.vcf.gz | head -n 30
+get the data
+```{r}
+snps <- read_tsv("../input/LT.vcf.gz", na = c("","NA","."),comment="#",col_names = FALSE)
+head(snps)
 ```
 
+get the header
+```{r}
+vcf.header <- system("zgrep '#C' ../input/LT.vcf.gz",intern = TRUE) 
+vcf.header
+vcf.header <- vcf.header %>% 
+  str_replace("#","") %>% #get rid of the pound sign
+  str_split(pattern = "\t") %>% #split on the tabs
+  magrittr::extract2(1)
+vcf.header
+```
 
 ```{r}
-snp <- read_tsv("../input/LT.vcf.gz", comment = "#", col_names = )
-head(snp)
+colnames(snps) <- vcf.header
+head(snps)
 ```
+
+
 
