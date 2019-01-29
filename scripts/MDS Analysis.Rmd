@@ -56,7 +56,7 @@ ulimit -n 4000
 
 (note: I edited the freebayes-parallel script so that it would work...)
 
-Takes about 12 hours
+Freeybayes parallel takes about 12 hours
 
 ```{r, engine='bash', eval=FALSE}
 scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ../input/
@@ -68,13 +68,7 @@ scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ../input/
 library(tidyverse)
 ```
 
-get the data
-```{r}
-snps <- read_tsv("../input/LT.vcf.gz", na = c("","NA","."),comment="#",col_names = FALSE)
-head(snps)
-```
-
-get the header
+get the vcf header
 ```{r}
 vcf.header <- system("zgrep '#C' ../input/LT.vcf.gz",intern = TRUE) 
 vcf.header
@@ -85,9 +79,25 @@ vcf.header <- vcf.header %>%
 vcf.header
 ```
 
+get the data
 ```{r}
-colnames(snps) <- vcf.header
-head(snps)
+snps <- read_tsv("../input/LT.vcf.gz", na = c("","NA","."),comment="#",col_names = vcf.header) %>%
+  select(-ID, -FILTER) # these are empty columns
+snps
+```
+
+filter to keep snps where there is data from all samples
+```{r}
+snps <- snps %>% 
+  filter({select(., matches("[0-9]")) %>% complete.cases() })
+snps
+```
+
+```{r}
+snps <- snps %>% 
+  filter(QUAL >=50,
+         nchar(ALT)==1)
+snps
 ```
 
 
