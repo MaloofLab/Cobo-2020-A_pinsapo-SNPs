@@ -49,8 +49,7 @@ freebayes -f SNPanalysis/Pinsaporeference1 --no-indels --no-mnps --no-complex LT
 
 try parallel
 ```{r, engine='bash', eval=FALSE}
-ln -s /usr/local/stow/freebayes/vcflib ../
-
+ulimit -n 4000
 /usr/local/stow/freebayes/scripts/fasta_generate_regions.py Pinsaporeference1.fai 100000 > regions
 ./freebayes-parallel regions 8 -f Pinsaporeference1 --no-indels --no-mnps --no-complex LT_rmdup_sort_combined.bam > LT.vcf 
 
