@@ -52,10 +52,11 @@ try parallel
 ulimit -n 4000
 /usr/local/stow/freebayes/scripts/fasta_generate_regions.py Pinsaporeference1.fai 100000 > regions
 ./freebayes-parallel regions 8 -f Pinsaporeference1 --no-indels --no-mnps --no-complex LT_rmdup_sort_combined.bam > LT.vcf 
-
 ```
 
 (note: I edited the freebayes-parallel script so that it would work...)
+
+Takes about 12 hours
 
 ```{r, engine='bash', eval=FALSE}
 scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ../input/
