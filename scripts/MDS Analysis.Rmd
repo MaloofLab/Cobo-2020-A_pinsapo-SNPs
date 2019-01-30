@@ -66,6 +66,7 @@ scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ../input/
 
 ```{r}
 library(tidyverse)
+library(ggrepel)
 ```
 
 get the vcf header
@@ -95,10 +96,72 @@ snps
 
 ```{r}
 snps <- snps %>% 
-  filter(QUAL >=50,
-         nchar(ALT)==1)
+  mutate(TOTAL_DEPTH= {str_extract(INFO, "DP=[0-9]*") %>% 
+      str_remove("DP=") %>%
+      as.numeric() }
+  ) %>%
+  filter(QUAL >=100,
+         nchar(ALT)==1,
+         TOTAL_DEPTH > quantile(TOTAL_DEPTH, 0.05),
+         TOTAL_DEPTH < quantile(TOTAL_DEPTH, 0.95))
 snps
 ```
 
+unpack the information differnet samples:
 
+```{r}
+samples <- colnames(snps) %>% str_subset("^[0-9]")
+
+for (s in samples) {
+snps <- snps %>%
+  separate(!!s, into=paste(s,c("gt","tot.depth","allele.depth","ref.depth","ref.qual","alt.depth","alt.qual","gt.lik"),sep="_"),
+           sep=":", convert = TRUE)
+}
+snps
+```
+
+For the MDS we only need the genotype info
+```{r}
+gts <- snps %>%
+  select(ends_with("_gt"))
+gts
+```
+
+convert this to numeric
+```{r}
+geno.numeric <- gts %>%
+  lapply(factor) %>% # convert charcters to "factors", where each category is internally represented as a number
+  as.data.frame() %>% # reformat
+  data.matrix() %>%#  convert to numeric
+  t() 
+
+head(geno.numeric[,1:5],10)
+
+dim(geno.numeric)
+dim(gts)
+```
+
+```{r}
+genDist <- as.matrix(dist(geno.numeric))
+dim(genDist)
+
+#perform the multi-dimensional scaling
+geno.mds <- as.tibble(cmdscale(genDist))
+
+geno.mds$ID <- rownames(geno.numeric) 
+
+geno.mds <- geno.mds %>%
+  mutate(ID={str_replace(ID, "W", "N") %>%
+       str_replace("RR", "R2") %>%
+      str_remove_all("(X|_gt)") },
+    response=ifelse(str_detect(ID,"N"), "no recovery", "recovery"))
+geno.mds
+```
+
+```{r}
+geno.mds %>%
+  ggplot(aes(x=V1, y = V2, label=ID, color=response)) +
+  geom_point() +
+  geom_text_repel(show.legend=FALSE, direction="y")
+```
 
