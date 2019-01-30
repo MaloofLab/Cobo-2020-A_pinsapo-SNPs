@@ -26,7 +26,7 @@ for f in SNPanalysis/*LT*rmdup.bam
 
 next, assign read groups to bams
 
-```{r, engine='bash'}
+```{r, engine='bash', eval=FALSE}
 input=""
 
 for f in `ls *sort.bam`
@@ -38,13 +38,25 @@ for f in `ls *sort.bam`
 echo $input
 
 bamaddrg $input > LT_rmdup_sort_combined.bam
-```
 
+samtools index LT_rmdup_sort_combined.bam
+```
 
 
 ```{r, engine='bash', eval=FALSE}
-freebayes -f SNPanalysis/Pinsaporeference1 --no-indels --no-mnps --no-complex *LT*rmdup_sort.bam > LT.vcf &
+freebayes -f SNPanalysis/Pinsaporeference1 --no-indels --no-mnps --no-complex LT_rmdup_sort_combined.bam > LT.vcf &
 ```
+
+try parallel
+```{r, engine='bash', eval=FALSE}
+ulimit -n 4000
+/usr/local/stow/freebayes/scripts/fasta_generate_regions.py Pinsaporeference1.fai 100000 > regions
+./freebayes-parallel regions 8 -f Pinsaporeference1 --no-indels --no-mnps --no-complex LT_rmdup_sort_combined.bam > LT.vcf 
+```
+
+(note: I edited the freebayes-parallel script so that it would work...)
+
+Freeybayes parallel takes about 12 hours
 
 ```{r, engine='bash', eval=FALSE}
 scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ../input/
@@ -54,15 +66,102 @@ scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ../input/
 
 ```{r}
 library(tidyverse)
+library(ggrepel)
 ```
 
-```{r, engine='bash'}
-gunzip -c ../input/LT.vcf.gz | head -n 30
+get the vcf header
+```{r}
+vcf.header <- system("zgrep '#C' ../input/LT.vcf.gz",intern = TRUE) 
+vcf.header
+vcf.header <- vcf.header %>% 
+  str_replace("#","") %>% #get rid of the pound sign
+  str_split(pattern = "\t") %>% #split on the tabs
+  magrittr::extract2(1)
+vcf.header
 ```
 
+get the data
+```{r}
+snps <- read_tsv("../input/LT.vcf.gz", na = c("","NA","."),comment="#",col_names = vcf.header) %>%
+  select(-ID, -FILTER) # these are empty columns
+snps
+```
+
+filter to keep snps where there is data from all samples
+```{r}
+snps <- snps %>% 
+  filter({select(., matches("[0-9]")) %>% complete.cases() })
+snps
+```
 
 ```{r}
-snp <- read_tsv("../input/LT.vcf.gz", comment = "#", col_names = )
-head(snp)
+snps <- snps %>% 
+  mutate(TOTAL_DEPTH= {str_extract(INFO, "DP=[0-9]*") %>% 
+      str_remove("DP=") %>%
+      as.numeric() }
+  ) %>%
+  filter(QUAL >=100,
+         nchar(ALT)==1,
+         TOTAL_DEPTH > quantile(TOTAL_DEPTH, 0.05),
+         TOTAL_DEPTH < quantile(TOTAL_DEPTH, 0.95))
+snps
+```
+
+unpack the information differnet samples:
+
+```{r}
+samples <- colnames(snps) %>% str_subset("^[0-9]")
+
+for (s in samples) {
+snps <- snps %>%
+  separate(!!s, into=paste(s,c("gt","tot.depth","allele.depth","ref.depth","ref.qual","alt.depth","alt.qual","gt.lik"),sep="_"),
+           sep=":", convert = TRUE)
+}
+snps
+```
+
+For the MDS we only need the genotype info
+```{r}
+gts <- snps %>%
+  select(ends_with("_gt"))
+gts
+```
+
+convert this to numeric
+```{r}
+geno.numeric <- gts %>%
+  lapply(factor) %>% # convert charcters to "factors", where each category is internally represented as a number
+  as.data.frame() %>% # reformat
+  data.matrix() %>%#  convert to numeric
+  t() 
+
+head(geno.numeric[,1:5],10)
+
+dim(geno.numeric)
+dim(gts)
+```
+
+```{r}
+genDist <- as.matrix(dist(geno.numeric))
+dim(genDist)
+
+#perform the multi-dimensional scaling
+geno.mds <- as.tibble(cmdscale(genDist))
+
+geno.mds$ID <- rownames(geno.numeric) 
+
+geno.mds <- geno.mds %>%
+  mutate(ID={str_replace(ID, "W", "N") %>%
+       str_replace("RR", "R2") %>%
+      str_remove_all("(X|_gt)") },
+    response=ifelse(str_detect(ID,"N"), "no recovery", "recovery"))
+geno.mds
+```
+
+```{r}
+geno.mds %>%
+  ggplot(aes(x=V1, y = V2, label=ID, color=response)) +
+  geom_point() +
+  geom_text_repel(show.legend=FALSE, direction="y")
 ```
 
