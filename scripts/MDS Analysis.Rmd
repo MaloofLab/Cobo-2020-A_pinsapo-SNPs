@@ -165,3 +165,45 @@ geno.mds %>%
   geom_text_repel(show.legend=FALSE, direction="y")
 ```
 
+
+## with LTR_38 removed
+
+convert this to numeric
+```{r}
+geno.numeric <- gts %>%
+  select(-`38LTR_gt`) %>%
+  lapply(factor) %>% # convert charcters to "factors", where each category is internally represented as a number
+  as.data.frame() %>% # reformat
+  data.matrix() %>%#  convert to numeric
+  t() 
+
+head(geno.numeric[,1:5],10)
+
+dim(geno.numeric)
+dim(gts)
+```
+
+```{r}
+genDist <- as.matrix(dist(geno.numeric))
+dim(genDist)
+
+#perform the multi-dimensional scaling
+geno.mds <- as.tibble(cmdscale(genDist))
+
+geno.mds$ID <- rownames(geno.numeric) 
+
+geno.mds <- geno.mds %>%
+  mutate(ID={str_replace(ID, "W", "N") %>%
+       str_replace("RR", "R2") %>%
+      str_remove_all("(X|_gt)") },
+    response=ifelse(str_detect(ID,"N"), "no recovery", "recovery"))
+geno.mds
+```
+
+```{r}
+geno.mds %>%
+  ggplot(aes(x=V1, y = V2, label=ID, color=response)) +
+  geom_point() +
+  geom_text_repel(show.legend=FALSE, direction="y")
+```
+
