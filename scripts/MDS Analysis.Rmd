@@ -205,5 +205,6 @@ geno.mds %>%
   ggplot(aes(x=V1, y = V2, label=ID, color=response)) +
   geom_point() +
   geom_text_repel(show.legend=FALSE, direction="y")
+ggsave("../output/MDS.pdf")
 ```
 
