@@ -29,6 +29,12 @@ snps <- read_tsv("../input/LT.vcf.gz", na = c("","NA","."),comment="#",col_names
 snps
 ```
 
+remove 38LTR
+```{r}
+snps <- snps %>% select(-`38LTR`)
+```
+
+
 filter to keep snps where there is data from all samples
 ```{r}
 snps <- snps %>% 
@@ -69,10 +75,44 @@ keep snps that are fixed differences between LTRR and LTNR
 
 Count per gene
 
+first, convert to long format
 ```{r}
 snps.l <- snps %>% select(CHROM, POS, ends_with("_gt")) %>%
   gather(key="plant", value="gt", -CHROM, -POS) %>%
-  mutate(respnse=str_extract(plant, "LT[NR]{1,2}"))
+  mutate(response=str_extract(plant, "(LTR|LTWR)")) %>%
+  arrange(CHROM, POS, response, plant)
 snps.l
+```
+
+filter to keep homozygous and fixed
+```{r}
+n.samples <- length(unique(snps.l$plant))
+
+unique(snps.l$gt)
+
+snps.l <- snps.l %>% 
+  filter(gt != "0/1") %>% # keep homozygous
+  group_by(CHROM, POS, response) %>%
+  filter(length(unique(gt))==1) %>% # all samples for a given response have the same genotype
+  group_by(CHROM,POS) %>%
+  filter(n() == n.samples) %>% # have a gt from every plant
+  filter(length(unique(gt))==2) %>% # different genotypes in LTR and LTWR
+  arrange(CHROM, POS, response, plant)
+snps.l
+```
+
+summarize per gene
+```{r}
+snp.summary <- snps.l %>% 
+  group_by(CHROM) %>%
+  summarize(snps=n() / n.samples) %>%
+  rename(contig=CHROM)
+
+snp.summary %>% arrange(desc(snps))
+```
+
+```{r}
+snp.summary %>% arrange(desc(snps)) %>%
+  write_csv("../output/fixed_snps.csv")
 ```
 

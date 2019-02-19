@@ -58,6 +58,15 @@ ulimit -n 4000
 
 Freeybayes parallel takes about 12 hours
 
+try parallel, keep snps
+
+```{r, engine='bash', eval=FALSE}
+ulimit -n 4000
+/usr/local/stow/freebayes/scripts/fasta_generate_regions.py Pinsaporeference1.fai 100000 > regions
+./freebayes-parallel regions 8 -f Pinsaporeference1 --no-mnps --no-complex LT_rmdup_sort_combined.bam > LT_w_indel.vcf 
+```
+
+
 ```{r, engine='bash', eval=FALSE}
 scp whitney.plb.ucdavis.edu:2019/IreneSnps/LT.vcf.gz ../input/
 ```
