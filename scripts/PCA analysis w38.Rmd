@@ -1,0 +1,139 @@
+---
+title: "PCA analysis w 38"
+output: html_notebook
+---
+
+Goal: Do a PCA plot using Irene's SNPs to look for relatedness among plants. 
+
+This version keeps sample 38LTR.
+
+See "PCA analysis.Rmd" for info on SNP calling, etc.
+
+
+```{r}
+library(tidyverse)
+library(ggrepel)
+```
+
+get the vcf header
+```{r}
+vcf.header <- system("zgrep '#C' ../input/LT.vcf.gz",intern = TRUE) 
+vcf.header
+vcf.header <- vcf.header %>% 
+  str_replace("#","") %>% #get rid of the pound sign
+  str_split(pattern = "\t") %>% #split on the tabs
+  magrittr::extract2(1)
+vcf.header
+```
+
+get the data
+```{r}
+snps <- read_tsv("../input/LT.vcf.gz", na = c("","NA","."),comment="#",col_names = vcf.header) %>%
+  select(-ID, -FILTER) # these are empty columns
+snps
+```
+
+filter to keep snps where there is data from all samples
+```{r}
+snps <- snps %>% 
+  filter({select(., matches("[0-9]")) %>% complete.cases() })
+snps
+```
+
+```{r}
+snps <- snps %>% 
+  mutate(TOTAL_DEPTH= {str_extract(INFO, "DP=[0-9]*") %>% 
+      str_remove("DP=") %>%
+      as.numeric() }
+  ) %>%
+  filter(QUAL >=100,
+         nchar(ALT)==1,
+         TOTAL_DEPTH > quantile(TOTAL_DEPTH, 0.05),
+         TOTAL_DEPTH < quantile(TOTAL_DEPTH, 0.95))
+snps
+```
+
+unpack the information differnet samples:
+
+```{r}
+samples <- colnames(snps) %>% str_subset("^[0-9]")
+
+for (s in samples) {
+snps <- snps %>%
+  separate(!!s, into=paste(s,c("gt","tot.depth","allele.depth","ref.depth","ref.qual","alt.depth","alt.qual","gt.lik"),sep="_"),
+           sep=":", convert = TRUE)
+}
+snps
+```
+
+For the PCA we only need the genotype info
+```{r}
+gts <- snps %>%
+  select(CHROM, POS, ends_with("_gt"))
+gts
+```
+
+convert this to numeric
+```{r}
+geno.numeric <- gts %>%
+  select(-CHROM, -POS) %>%
+  lapply(factor) %>% # convert charcters to "factors", where each category is internally represented as a number
+  as.data.frame() %>% # reformat
+  data.matrix() %>%#  convert to numeric
+  t() 
+
+colnames(geno.numeric) <- str_c(gts$CHROM, "_", gts$POS)
+
+head(geno.numeric[,1:5],10)
+
+dim(geno.numeric)
+dim(gts)
+```
+
+get the principal components
+
+```{r}
+pca <- prcomp(geno.numeric)
+summary(pca)
+```
+
+plot it
+```{r}
+plot.data <- pca$x %>%
+  as.data.frame %>%
+  rownames_to_column("sample") %>%
+  mutate(response=str_extract(sample, "(LTR|LTWR)")) %>%
+  gather(key="component", value="value",PC2:PC9)
+  
+plots <- map(sort(unique(plot.data$component)), function(x) {
+  plot.data %>%
+    filter(component==x) %>%
+    ggplot(aes(x=PC1, y= value, label=sample, color=response)) +
+      geom_point() + ylab(x)
+  }
+  )
+
+plots  
+```
+
+## make plot of PC1 vs PC2 for paper
+
+```{r}
+pc1pc2 <- pca$x %>%
+  as.data.frame() %>%
+  rownames_to_column("ID") %>%
+  select(ID, PC1, PC2) %>%
+  mutate(ID={str_replace(ID, "W", "N") %>%
+       str_replace("RR", "R2") %>%
+      str_remove_all("(X|_gt)") },
+    response=ifelse(str_detect(ID,"N"), "no recovery", "recovery"))
+pc1pc2
+```
+
+```{r}
+pc1pc2 %>%
+  ggplot(aes(x=PC1, y = PC2, label=ID, color=response)) +
+  geom_point() +
+  geom_text_repel(show.legend=FALSE, direction="y")
+ggsave("../output/PCAw38.pdf")
+```

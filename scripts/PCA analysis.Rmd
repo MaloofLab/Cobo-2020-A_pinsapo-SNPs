@@ -215,7 +215,7 @@ contributions
 ```
 
 ```{r}
-write_csv(contributions, "../output/gene_contributions.csv")
+write_csv(contributions, "../output/gene_contributions.csv.gz")
 ```
 
 ## make plot of PC1 vs PC2 for paper
