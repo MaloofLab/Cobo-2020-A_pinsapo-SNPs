@@ -198,7 +198,7 @@ contributions <- loadings %>%
 contributions
 ```
 
-bring in seq lineghts
+bring in seq lengths
 
 ```{r}
 lengths <- read_csv("../input/Pinsaporeference1_lengths.csv", col_names = c("contig", "length"), skip=1) %>%
@@ -239,3 +239,22 @@ pc1pc2 %>%
   geom_text_repel(show.legend=FALSE, direction="y")
 ggsave("../output/PCA.pdf")
 ```
+
+Create a list of GCZN01054158.1 SNPs
+```{r}
+GCZN01054158.1.loadings <- loadings %>%
+  filter(str_detect(snp, fixed("GCZN01054158.1"))) %>%
+  separate(snp,into = c("contig", "position"), sep="_",convert = TRUE) %>%
+  arrange(position)
+GCZN01054158.1.loadings
+```
+
+```{r}
+GCZN01054158.snpinfo <- left_join(GCZN01054158.1.loadings, snps, by=c("contig" = "CHROM", "position" = "POS"))
+GCZN01054158.snpinfo
+```
+
+```{r}
+write_csv(GCZN01054158.snpinfo, "../output/GCZN01054158.snpinfo.csv")
+```
+
