@@ -258,3 +258,36 @@ GCZN01054158.snpinfo
 write_csv(GCZN01054158.snpinfo, "../output/GCZN01054158.snpinfo.csv")
 ```
 
+Create a list of SNPs in all genes with fixed differences
+
+```{r}
+get_snps <- function(contig, loadings=loadings) {
+  loadings %>%
+  filter(str_detect(snp, fixed("GCZN01054158.1"))) %>%
+  separate(snp,into = c("contig", "position"), sep="_",convert = TRUE) %>%
+  arrange(position)
+GCZN01054158.1.loadings
+GCZN01054158.snpinfo <- left_join(GCZN01054158.1.loadings, snps, by=c("contig" = "CHROM", "position" = "POS"))
+GCZN01054158.snpinfo
+}
+```
+
+
+```{r}
+fixed_genes <- read_csv("../output/fixed_snps.csv")
+fixed_genes
+```
+
+```{r}
+fixed_genes_snps <- loadings %>% 
+  separate(snp,into = c("contig", "position"), sep="_",convert = TRUE, remove = FALSE) %>%
+  semi_join(fixed_genes, by="contig") %>%
+  left_join(snps, by=c("contig" = "CHROM", "position" = "POS")) %>%
+  arrange(contig, position)
+fixed_genes_snps
+```
+
+```{r}
+write_csv(fixed_genes_snps, "../output/fixed_genes_snps.csv")
+```
+
